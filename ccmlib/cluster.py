@@ -68,11 +68,11 @@ class Cluster():
         self.__update_config()
         for node in list(self.nodes.values()):
             node.import_config_files()
-        
+
         # if any nodes have a data center, let's update the topology
         if any( [node.data_center for node in self.nodes.values()] ):
             self.__update_topology_files()
-        
+
         return self
 
     def get_cassandra_dir(self):
@@ -130,7 +130,7 @@ class Cluster():
             self.__update_topology_files()
         return self
 
-    def populate(self, nodes, debug=False, tokens=None, use_vnodes=False, ipprefix='127.0.0.'):
+    def populate(self, nodes, debug=False, tokens=None, use_vnodes=False, ipprefix='127.0.0.', iplist=None):
         node_count = nodes
         dcs = []
         if isinstance(nodes, list):
@@ -159,14 +159,19 @@ class Cluster():
                 tk = tokens[i-1]
             dc = dcs[i-1] if i-1 < len(dcs) else None
 
+            node_ip = '%s%s' % (ipprefix, i)
+
+            if (iplist is not None):
+                node_ip = iplist[i-1]
+
             binary = None
             if self.version() >= '1.2':
-                binary = ('%s%s' % (ipprefix, i), 9042)
+                binary = (node_ip, 9042)
             node = Node('node%s' % i,
                         self,
                         False,
-                        ('%s%s' % (ipprefix, i), 9160),
-                        ('%s%s' % (ipprefix, i), 7000),
+                        (node_ip, 9160),
+                        (node_ip, 7000),
                         str(7000 + i * 100),
                         (str(0),  str(2000 + i * 100))[debug == True],
                         tk,

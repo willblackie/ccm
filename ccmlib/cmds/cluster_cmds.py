@@ -115,7 +115,7 @@ class ClusterCreateCmd(Cmd):
                     cluster.set_log_level("DEBUG")
                 if self.options.trace_log:
                     cluster.set_log_level("TRACE")
-                cluster.populate(self.nodes, use_vnodes=self.options.vnodes, ipprefix=self.options.ipprefix)
+                cluster.populate(self.nodes, use_vnodes=self.options.vnodes, ipprefix=self.options.ipprefix, ip_list=self.options.iplist)
                 if self.options.start_nodes:
                     profile_options = None
                     if self.options.profile:
@@ -212,6 +212,8 @@ class ClusterPopulateCmd(Cmd):
             help="Populate using vnodes", default=False)
         parser.add_option('-i', '--ipprefix', type="string", dest="ipprefix", default="127.0.0.",
             help="Ipprefix to use to create the ip of a node")
+        parser.add_option('--iplist', type="string", action="store", dest="iplist",
+            help="If you want to specify the list of ips to assign, comma separated e.g. 127.0.0.2,127.0.0.3 .. length must match the number of nodes specified with -n.  This takes precedence over --ipprefix", default=None)
         return parser
 
     def validate(self, parser, options, args):
@@ -223,7 +225,11 @@ class ClusterPopulateCmd(Cmd):
             if self.cluster.version() >= "1.2" and self.options.vnodes:
                 self.cluster.set_configuration_options({ 'num_tokens' : 256 })
 
-            self.cluster.populate(self.nodes, self.options.debug, use_vnodes=self.options.vnodes, ipprefix=self.options.ipprefix)
+            iplist = None
+            if (self.options.iplist is not None):
+                iplist = filter(None, self.options.iplist.split(','))
+
+            self.cluster.populate(self.nodes, self.options.debug, use_vnodes=self.options.vnodes, ipprefix=self.options.ipprefix, iplist=iplist)
         except common.ArgumentError as e:
             print_(str(e), file=sys.stderr)
             exit(1)
@@ -550,8 +556,8 @@ class ClusterUpdateconfCmd(Cmd):
         self.cluster.set_configuration_options(values=self.setting, batch_commitlog=self.options.cl_batch)
 
 #
-# Class implementens the functionality of updating log4j-server.properties 
-# on ALL nodes by copying the given config into 
+# Class implementens the functionality of updating log4j-server.properties
+# on ALL nodes by copying the given config into
 # ~/.ccm/name-of-cluster/nodeX/conf/log4j-server.properties
 #
 class ClusterUpdatelog4jCmd(Cmd):
@@ -570,7 +576,7 @@ class ClusterUpdatelog4jCmd(Cmd):
         try:
             self.log4jpath = options.log4jpath
             if self.log4jpath is None:
-                raise KeyError("[Errno] -p or --path <path of new log4j congiguration file> is not provided") 
+                raise KeyError("[Errno] -p or --path <path of new log4j congiguration file> is not provided")
         except common.ArgumentError as e:
             print_(str(e), file=sys.stderr)
             exit(1)
