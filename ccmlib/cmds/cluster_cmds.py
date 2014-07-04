@@ -214,6 +214,8 @@ class ClusterPopulateCmd(Cmd):
             help="Ipprefix to use to create the ip of a node")
         parser.add_option('--iplist', type="string", action="store", dest="iplist",
             help="If you want to specify the list of ips to assign, comma separated e.g. 127.0.0.2,127.0.0.3 .. length must match the number of nodes specified with -n.  This takes precedence over --ipprefix", default=None)
+        parser.add_option('--dclist', type="string", action="store", dest="dclist",
+            help="If you want to specify a list of data centers to assign to nodes", default=None)
         return parser
 
     def validate(self, parser, options, args):
@@ -229,7 +231,7 @@ class ClusterPopulateCmd(Cmd):
             if (self.options.iplist is not None):
                 iplist = filter(None, self.options.iplist.split(','))
 
-            self.cluster.populate(self.nodes, self.options.debug, use_vnodes=self.options.vnodes, ipprefix=self.options.ipprefix, iplist=iplist)
+            self.cluster.populate(self.nodes, self.options.debug, use_vnodes=self.options.vnodes, ipprefix=self.options.ipprefix, iplist=iplist, dclist=self.options.dclist)
         except common.ArgumentError as e:
             print_(str(e), file=sys.stderr)
             exit(1)

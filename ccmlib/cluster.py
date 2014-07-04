@@ -130,18 +130,23 @@ class Cluster():
             self.__update_topology_files()
         return self
 
-    def populate(self, nodes, debug=False, tokens=None, use_vnodes=False, ipprefix='127.0.0.', iplist=None):
+    def populate(self, nodes, debug=False, tokens=None, use_vnodes=False, ipprefix='127.0.0.', iplist=None, dclist=None):
         node_count = nodes
         dcs = []
-        if isinstance(nodes, list):
-            self.set_configuration_options(values={'endpoint_snitch' : 'org.apache.cassandra.locator.PropertyFileSnitch'})
-            node_count = 0
-            i = 0
-            for c in nodes:
-                i = i + 1
-                node_count = node_count + c
-                for x in xrange(0, c):
-                    dcs.append('dc%d' % i)
+
+        if dclist is not None:
+          self.set_configuration_options(values={'endpoint_snitch' : 'org.apache.cassandra.locator.PropertyFileSnitch'})
+          dcs = filter(None, dclist.split(","))
+        else:
+          if isinstance(nodes, list):
+              self.set_configuration_options(values={'endpoint_snitch' : 'org.apache.cassandra.locator.PropertyFileSnitch'})
+              node_count = 0
+              i = 0
+              for c in nodes:
+                  i = i + 1
+                  node_count = node_count + c
+                  for x in xrange(0, c):
+                      dcs.append('dc%d' % i)
 
         if node_count < 1:
             raise common.ArgumentError('invalid node count %s' % nodes)
